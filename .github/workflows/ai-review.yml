@@ -17,10 +17,10 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
       - run: bun install -g opencode-ai
-      - run: opencode run --agent=review "$(git diff ${{ github.base_ref }})" > review.md
+      - run: opencode run --agent=review "$(git diff ${{ github.base_ref }})" > ai-review.md
 
       - name: PR comment with file
         uses: mshick/add-pr-comment@v2
         with:
-          message-path: review.md
+          message-path: ai-review.md
           refresh-message-position: true
