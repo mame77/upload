@@ -25,5 +25,5 @@ jobs:
           go-version-file: backend/go.mod
           cache: true
       - name: Run golangci-lint
-        run: cd backend && golangci-lint run ./backend/internal/...
+        run: cd backend && golangci-lint run ./internal/...
 
