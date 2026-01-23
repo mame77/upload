@@ -24,10 +24,9 @@ jobs:
         with:
           go-version-file: backend/go.mod
           cache: true
-        env:
-          ACTIONS_CACHE_DISABLED: "true"
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
           version: latest
+          install-mode: binary
           args: ./backend/internal/...
