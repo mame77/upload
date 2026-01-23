@@ -12,7 +12,7 @@ jobs:
           go-version-file: backend/go.mod
           cache: true
       - name: Download modules
-        run: go mod download
+        run: cd backend && go mod download
       - name: Build API
         run: go build ./backend/cmd
   lint:
