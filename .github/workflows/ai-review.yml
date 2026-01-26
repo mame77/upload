@@ -19,8 +19,17 @@ jobs:
       - run: bun install -g opencode-ai
       - run: opencode run --agent=review "$(git diff ${{ github.base_ref }})" > ai-review.md
 
+      - name: Read review output
+        id: read-review
+        run: |
+          if [ -f ai-review.md ]; then
+            echo "message<<EOF" >> $GITHUB_OUTPUT
+            cat ai-review.md >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          fi
+
       - name: PR comment with file
         uses: mshick/add-pr-comment@v2
         with:
-          message-path: ai-review.md
+          message: ${{ steps.read-review.outputs.message }}
           refresh-message-position: true
