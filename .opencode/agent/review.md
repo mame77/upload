@@ -70,4 +70,3 @@ tools:
    + query := "SELECT * FROM users WHERE name = ?"
    + stmt, _ := db.Prepare(query)
    + rows, err := stmt.Query(name)
-
