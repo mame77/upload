@@ -17,7 +17,10 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
       - run: bun install -g opencode-ai
-      - run: opencode run --agent=review "$(git diff ${{ github.base_ref }})" > ai-review.md
+      - run: |
+          set -x
+          git diff ${{ github.base_ref }} | opencode run --agent=review > ai-review.md
+          echo "exit=$?"
 
       - name: Read review output
         id: read-review
