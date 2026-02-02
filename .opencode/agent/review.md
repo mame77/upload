@@ -1,7 +1,7 @@
 ---
 description: Reviews code for quality and best practices
 mode: primary
-model: opencode/glm-4.7-free
+model: opencode/gpt-4.1-mini
 temperature: 0.1
 tools:
   write: false
