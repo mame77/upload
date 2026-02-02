@@ -35,6 +35,8 @@ jobs:
         id: read-review
         run: |
           if [ -f ai-review.md ]; then
+            echo "=== ai-review.md (head) ==="
+            sed -n '1,120p' ai-review.md
             echo "message<<EOF" >> $GITHUB_OUTPUT
             cat ai-review.md >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
