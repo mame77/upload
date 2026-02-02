@@ -25,9 +25,11 @@ jobs:
           echo "head_ref=${{ github.head_ref }}"
           echo "diff_lines=$(git diff ${{ github.base_ref }} | wc -l)"
       - run: |
-          set -euxo pipefail
-          git diff ${{ github.base_ref }} | timeout 180s opencode run --agent=review > ai-review.md
+          set +e
+          git diff ${{ github.base_ref }} | timeout 180s opencode run --agent=review > ai-review.md 2> opencode.err
           echo "exit=$?"
+          echo "stderr:"
+          tail -n 50 opencode.err
 
       - name: Read review output
         id: read-review
