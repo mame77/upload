@@ -2,11 +2,8 @@ package service
 
 import (
 	"context"
-	"path"
-	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
 )
 
@@ -26,12 +23,4 @@ func (s *PresignService) PresignPut(ctx context.Context, fileName string, conten
 		return "", "", err
 	}
 	return objectKey, url.String(), nil
-}
-
-func buildObjectKey(fileName string) string {
-	ext := strings.ToLower(path.Ext(fileName))
-	if ext == "" || len(ext) > 16 {
-		ext = ""
-	}
-	return uuid.New().String() + ext
 }
