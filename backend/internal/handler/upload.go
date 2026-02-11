@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 	"time"
 
 	"upload/internal/entity"
@@ -10,12 +11,14 @@ import (
 )
 
 type UploadHandler struct {
-	repo    port.UploadRepository
-	presign port.PresignService
+	repo       port.UploadRepository
+	presign    port.PresignService
+	publicBase string
+	bucket     string
 }
 
-func NewUploadHandler(repo port.UploadRepository, presign port.PresignService) *UploadHandler {
-	return &UploadHandler{repo: repo, presign: presign}
+func NewUploadHandler(repo port.UploadRepository, presign port.PresignService, publicBase string, bucket string) *UploadHandler {
+	return &UploadHandler{repo: repo, presign: presign, publicBase: publicBase, bucket: bucket}
 }
 
 type presignRequest struct {
@@ -69,7 +72,9 @@ type completeRequest struct {
 }
 
 type completeResponse struct {
-	ID int64 `json:"id"`
+	ID        int64  `json:"id"`
+	ObjectKey string `json:"objectKey"`
+	URL       string `json:"url"`
 }
 
 func (h *UploadHandler) Complete(w http.ResponseWriter, r *http.Request) {
@@ -94,11 +99,20 @@ func (h *UploadHandler) Complete(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "failed to save", http.StatusInternalServerError)
 		return
 	}
-	writeJSON(w, http.StatusOK, completeResponse{ID: id})
+	writeJSON(w, http.StatusOK, completeResponse{
+		ID:        id,
+		ObjectKey: req.ObjectKey,
+		URL:       buildPublicURL(h.publicBase, h.bucket, req.ObjectKey),
+	})
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(v)
+}
+
+func buildPublicURL(publicBase string, bucket string, objectKey string) string {
+	publicBase = strings.TrimRight(publicBase, "/")
+	return publicBase + "/" + bucket + "/" + objectKey
 }

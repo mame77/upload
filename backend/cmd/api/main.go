@@ -50,7 +50,7 @@ func main() {
 	}
 
 	presignService := service.NewPresignService(minioClient, cfg.MinioBucket)
-	uploadHandler := handler.NewUploadHandler(repo, presignService)
+	uploadHandler := handler.NewUploadHandler(repo, presignService, cfg.MinioPublicURL, cfg.MinioBucket)
 
 	r := chi.NewRouter()
 	r.Use(corsMiddleware(cfg.AllowedOrigin))
@@ -73,6 +73,7 @@ type config struct {
 	MinioSecretKey string
 	MinioBucket    string
 	MinioUseSSL    bool
+	MinioPublicURL string
 	AllowedOrigin  string
 }
 
@@ -83,6 +84,7 @@ func loadConfig() (config, error) {
 		MinioAccessKey: os.Getenv("MINIO_ACCESS_KEY"),
 		MinioSecretKey: os.Getenv("MINIO_SECRET_KEY"),
 		MinioBucket:    os.Getenv("MINIO_BUCKET"),
+		MinioPublicURL: os.Getenv("MINIO_PUBLIC_URL"),
 		AllowedOrigin:  os.Getenv("ALLOWED_ORIGIN"),
 	}
 	if cfg.AllowedOrigin == "" {
@@ -94,6 +96,9 @@ func loadConfig() (config, error) {
 			return config{}, err
 		}
 		cfg.MinioUseSSL = parsed
+	}
+	if cfg.MinioPublicURL == "" && cfg.MinioEndpoint != "" {
+		cfg.MinioPublicURL = defaultPublicURL(cfg.MinioEndpoint, cfg.MinioUseSSL)
 	}
 	if cfg.DatabaseURL == "" || cfg.MinioEndpoint == "" || cfg.MinioAccessKey == "" || cfg.MinioSecretKey == "" || cfg.MinioBucket == "" {
 		return config{}, errMissingEnv
@@ -135,4 +140,12 @@ func corsMiddleware(allowedOrigin string) func(http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 		})
 	}
+}
+
+func defaultPublicURL(endpoint string, useSSL bool) string {
+	scheme := "http"
+	if useSSL {
+		scheme = "https"
+	}
+	return scheme + "://" + strings.TrimSpace(endpoint)
 }

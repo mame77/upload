@@ -5,6 +5,7 @@ const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8000';
 const App = () => {
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<string>('');
+  const [items, setItems] = useState<Array<{ id: number; url: string; fileName: string }>>([]);
 
   const hoge = (e: ChangeEvent<HTMLInputElement>) => {
     setFile(e.target.files?.[0] ?? null);
@@ -55,6 +56,11 @@ const App = () => {
       setStatus('save failed');
       return;
     }
+    const saved = await completeRes.json();
+    setItems((prev) => [
+      { id: saved.id, url: saved.url, fileName: file.name },
+      ...prev,
+    ]);
     setStatus('done');
   };
 
@@ -63,6 +69,12 @@ const App = () => {
       <input type="file" onChange={hoge} />
       <button onClick={moge}>send</button>
       <div>{status}</div>
+      {items.map((item) => (
+        <div key={item.id}>
+          <div>{item.fileName}</div>
+          <img src={item.url} alt={item.fileName} style={{ maxWidth: 240 }} />
+        </div>
+      ))}
     </>
   );
 };
