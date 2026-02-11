@@ -1,7 +1,11 @@
 import { useState, ChangeEvent } from 'react';
 
+const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8000';
+
 const App = () => {
   const [file, setFile] = useState<File | null>(null);
+  const [status, setStatus] = useState<string>('');
+  const [items, setItems] = useState<Array<{ id: number; url: string; fileName: string }>>([]);
 
   const hoge = (e: ChangeEvent<HTMLInputElement>) => {
     setFile(e.target.files?.[0] ?? null);
@@ -10,19 +14,67 @@ const App = () => {
   const moge = async () => {
     if (!file) return;
 
-    const formData = new FormData();
-    formData.append('image', file);
-
-    await fetch('http://localhost:8000/upload', {
+    const contentType = file.type || 'application/octet-stream';
+    setStatus('presign...');
+    const presignRes = await fetch(`${API_BASE}/presign`, {
       method: 'POST',
-      body: formData,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fileName: file.name,
+        contentType,
+      }),
     });
+    if (!presignRes.ok) {
+      setStatus('presign failed');
+      return;
+    }
+    const presign = await presignRes.json();
+
+    setStatus('uploading...');
+    const putRes = await fetch(presign.url, {
+      method: presign.method ?? 'PUT',
+      headers: presign.headers ?? { 'Content-Type': contentType },
+      body: file,
+    });
+    if (!putRes.ok) {
+      setStatus('upload failed');
+      return;
+    }
+
+    setStatus('saving...');
+    const completeRes = await fetch(`${API_BASE}/upload/complete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        objectKey: presign.objectKey,
+        fileName: file.name,
+        contentType,
+        size: file.size,
+      }),
+    });
+    if (!completeRes.ok) {
+      setStatus('save failed');
+      return;
+    }
+    const saved = await completeRes.json();
+    setItems((prev) => [
+      { id: saved.id, url: saved.url, fileName: file.name },
+      ...prev,
+    ]);
+    setStatus('done');
   };
 
   return (
     <>
       <input type="file" onChange={hoge} />
       <button onClick={moge}>send</button>
+      <div>{status}</div>
+      {items.map((item) => (
+        <div key={item.id}>
+          <div>{item.fileName}</div>
+          <img src={item.url} alt={item.fileName} style={{ maxWidth: 240 }} />
+        </div>
+      ))}
     </>
   );
 };
